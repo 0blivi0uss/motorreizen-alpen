@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alpen Passenparade – reisboek &amp; kaart</title>
+<link rel="stylesheet" href="leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#c2410c; --primary-hi:#ea580c; --on-primary:#fff;
+  --teal:#0e7490; --teal-soft:#e0f2f7;
+  --bg:#fff7ed; --fg:#0f172a; --muted:#475569; --card:#fff; --line:#f1e4d8; --line-strong:#e2cfbd;
+  --radius:14px; --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+  --nav-h:58px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--fg);background:var(--bg);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary-hi);outline-offset:2px;border-radius:6px}
+svg.i{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:min(78vh,720px);display:flex;align-items:flex-end;color:#fff;overflow:hidden;isolation:isolate}
+.hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transform:scale(1.04);animation:drift 18s ease-out forwards}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(15,23,42,.15) 0%,rgba(15,23,42,.25) 40%,rgba(15,23,42,.88) 100%)}
+@keyframes drift{to{transform:scale(1)}}
+.hero-inner{width:100%;max-width:1200px;margin:0 auto;padding:48px 28px 36px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 12.5px Inter;letter-spacing:1.4px;text-transform:uppercase;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px);padding:6px 12px;border-radius:999px}
+.hero h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:clamp(48px,8vw,96px);line-height:.92;margin:16px 0 12px;letter-spacing:-.5px;text-transform:uppercase}
+.hero .lede{font-size:clamp(16px,1.6vw,19px);line-height:1.5;max-width:640px;margin:0 0 26px;color:#f1f5f9}
+.route-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:600;font-size:14px;margin-bottom:26px;color:#fed7aa}
+.route-line svg{width:14px;height:14px;opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-width:860px}
+.stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(10px);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:30px;line-height:1}
+.stat span{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:#e2e8f0}
+.ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:12px 18px;font-weight:600;font-size:15px;cursor:pointer;border:1px solid transparent;transition:background .2s,transform .2s,border-color .2s;min-height:44px}
+.btn-primary{background:var(--primary);color:var(--on-primary)}
+.btn-primary:hover{background:#9a3412}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)}
+.btn-ghost:hover{background:rgba(255,255,255,.22)}
+.btn-dark{background:var(--fg);color:#fff}
+.btn-dark:hover{background:#1e293b}
+.btn-light{background:#fff;color:var(--fg);border-color:var(--line-strong)}
+.btn-light:hover{border-color:var(--fg)}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:1000;height:var(--nav-h);display:flex;align-items:center;gap:6px;overflow-x:auto;padding:0 20px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:8px 14px;font-weight:500;font-size:13.5px;cursor:pointer;min-height:38px;transition:border-color .15s,background .15s,color .15s}
+nav button:hover{border-color:var(--fg)}
+nav button.on{background:var(--fg);color:#fff;border-color:var(--fg)}
+nav .dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px #fff}
+nav .sep{width:1px;height:24px;background:var(--line-strong);flex:0 0 auto;margin:0 4px}
+
+/* ---------- app ---------- */
+main{display:grid;grid-template-columns:minmax(380px,460px) 1fr;height:calc(100vh - var(--nav-h));min-height:560px}
+#panel{overflow-y:auto;padding:26px 26px 48px;border-right:1px solid var(--line);background:var(--bg);scroll-behavior:smooth}
+#map{height:100%;background:#16232b}
+.leaflet-container{font-family:Inter,sans-serif;background:#16232b}
+.leaflet-tooltip.lbl{box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.kicker{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kicker .sw{width:12px;height:12px;border-radius:3px}
+h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:34px;line-height:1.02;margin:8px 0 12px;text-transform:uppercase;letter-spacing:.2px}
+h3{display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:26px 0 10px}
+p{line-height:1.6;font-size:15px;margin:0 0 12px}
+.cover{margin:-26px -26px 20px;aspect-ratio:16/8;overflow:hidden;position:relative;cursor:zoom-in}
+.cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cover span{position:absolute;right:10px;bottom:8px;font-size:11.5px;color:#fff;background:rgba(15,23,42,.55);padding:3px 8px;border-radius:6px}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:4px 0 16px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
+.metric .v{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:22px;line-height:1.05}
+.metric .l{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.metric .l svg{width:13px;height:13px}
+ul.hl{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+ul.hl li{display:grid;grid-template-columns:20px 1fr;gap:8px;font-size:14.5px;line-height:1.5}
+ul.hl li svg{width:18px;height:18px;color:var(--primary);margin-top:2px}
+.passes{display:grid;gap:8px}
+.pass{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pass .n{font-weight:600;font-size:14.5px}
+.pass .h{font-variant-numeric:tabular-nums;font-weight:600;font-size:13px;color:var(--teal)}
+.pass .bar{grid-column:1/-1;height:5px;border-radius:3px;background:#f1e4d8;overflow:hidden}
+.pass .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),#22d3ee)}
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gallery figure{margin:0;cursor:zoom-in;position:relative;border-radius:12px;overflow:hidden;background:#e5e7eb;aspect-ratio:4/3}
+.gallery figure.wide{grid-column:span 2;aspect-ratio:16/9}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.gallery figure:hover img{transform:scale(1.04)}
+.gallery figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 7px;font-size:12px;font-weight:500;color:#fff;background:linear-gradient(transparent,rgba(15,23,42,.75))}
+.note{display:flex;gap:8px;font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.5;background:var(--teal-soft);border-radius:10px;padding:10px 12px}
+.note svg{width:16px;height:16px;color:var(--teal);margin-top:1px}
+.plan{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:13.5px;line-height:1.5}
+.plan svg{color:var(--primary);margin-top:2px}
+.plan b{font-weight:600}
+.pager{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+/* overzicht */
+.intro-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
+.ichip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:500}
+.ichip svg{width:15px;height:15px;color:var(--primary)}
+.bases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.base{border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+.base img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.base div{padding:8px 10px}
+.base b{display:block;font-size:13.5px}
+.base span{font-size:12px;color:var(--muted)}
+.daygrid{display:grid;gap:8px}
+.daycard{display:grid;grid-template-columns:76px 1fr 18px;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;text-align:left;width:100%;transition:border-color .15s,box-shadow .15s,transform .15s}
+.daycard:hover{border-color:var(--line-strong);box-shadow:var(--shadow);transform:translateY(-1px)}
+.daycard img,.daycard .ph{width:76px;height:58px;object-fit:cover;border-radius:8px;background:#eee;display:block}
+.daycard .t{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:7px}
+.daycard .t i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.daycard .m{font-size:12.5px;color:var(--muted);margin-top:2px}
+.daycard > svg{color:#94a3b8}
+/* reisboek */
+.book .day{background:#fff;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.book .day h4{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:20px;margin:0 0 4px;text-transform:uppercase}
+.book .day .meta{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.book table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.book td{padding:9px 12px;border-bottom:1px solid #f5ebe1;vertical-align:top}
+.book tr:last-child td{border-bottom:none}
+.book td:first-child{color:var(--muted);width:40%;font-weight:500}
+.price{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:18px;color:var(--primary)}
+.warn li svg{color:#b45309 !important}
+.credits{font-size:11.5px;color:var(--muted);line-height:1.6}
+.credits a{color:var(--muted)}
+/* kaartlabels */
+.lbl{background:rgba(255,255,255,.94);border:1px solid #d6d3d1;border-radius:5px;padding:1px 6px;font:600 11px Inter;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.lbl.hq{background:var(--primary);color:#fff;border:none}
+.town{font-weight:500;color:#334155;background:rgba(255,255,255,.8)}
+.passlbl{border-color:var(--fg)}
+.leaflet-tooltip.lbl:before{display:none}
+.pop img{width:240px;height:160px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px}
+.pop b{font-size:13px}
+.legend{background:#fff;border-radius:10px;padding:9px 12px;font-size:12px;box-shadow:var(--shadow);line-height:1.7;border:1px solid var(--line)}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid #334155;vertical-align:middle;margin-right:6px}
+.legend i.d{border-top:3px dashed #334155}
+/* lightbox */
+#lb{position:fixed;inset:0;background:rgba(10,10,12,.92);display:none;align-items:center;justify-content:center;z-index:9999;flex-direction:column;padding:20px}
+#lb.on{display:flex}
+#lb img{max-width:96vw;max-height:80vh;border-radius:8px}
+#lb .cap{color:#eee;font-size:14px;margin-top:10px;text-align:center}
+#lb .cap a{color:#bbb}
+#lb button{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+@media (max-width:900px){
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stats .stat:nth-child(n+4){display:none}
+  .legend{display:none}
+  main{grid-template-columns:1fr;grid-template-rows:48vh auto;height:auto}
+  #map{order:1;height:48vh}
+  #panel{order:2;border-right:none;overflow:visible;padding:22px 18px 40px}
+  .cover{margin:-22px -18px 18px}
+  .hero-inner{padding:40px 18px 26px}
+  nav{padding:0 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+  .hero img.bg{transform:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bed" viewBox="0 0 24 24"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+  <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M14.1 4.6 9.9 2.4a2 2 0 0 0-1.8 0L3.6 4.8A1 1 0 0 0 3 5.7v14.7a1 1 0 0 0 1.4.9l3.7-1.8a2 2 0 0 1 1.8 0l4.2 2.1a2 2 0 0 0 1.8 0l4.5-2.3a1 1 0 0 0 .6-.9V3.6a1 1 0 0 0-1.4-.9l-3.7 1.8a2 2 0 0 1-1.8.1zM9 2.2v17M15 4.8v17"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h2l3 11.5M5.5 17.5 9 10h7l-3.5 7.5M9 10 8 7H6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></symbol>
+</svg>
+
+<header class="hero">
+  <img class="bg" src="img/giau.jpg" alt="Bochtige weg over de Passo Giau met de Dolomieten op de achtergrond">
+  <div class="hero-inner">
+    <span class="eyebrow"><svg class="i"><use href="#i-bike"/></svg>MTR Motorreizen · individuele reis</span>
+    <h1>Alpen<br>Passenparade</h1>
+    <p class="lede">Elf dagen, ruim dertig passen en vier landen. Vanuit Bovensmilde via het Zwarte Woud naar Tirol en de Dolomieten, en weer terug.</p>
+    <div class="route-line">Bovensmilde <svg class="i"><use href="#i-chev"/></svg> Zwarte Woud <svg class="i"><use href="#i-chev"/></svg> Nauders <svg class="i"><use href="#i-chev"/></svg> Selva di Val Gardena <svg class="i"><use href="#i-chev"/></svg> Bovensmilde</div>
+    <div class="stats">
+      <div class="stat"><b>11</b><span>dagen</span></div>
+      <div class="stat"><b>±3.750</b><span>km (kort)</span></div>
+      <div class="stat"><b>30+</b><span>passen</span></div>
+      <div class="stat"><b>4</b><span>landen</span></div>
+      <div class="stat"><b>€1.290</b><span>p.p. (2-pk)</span></div>
+    </div>
+    <div class="ctas">
+      <button class="btn btn-primary" data-go="overzicht"><svg class="i"><use href="#i-map"/></svg>Bekijk de route</button>
+      <button class="btn btn-ghost" data-go="reisboek"><svg class="i"><use href="#i-book"/></svg>Open het reisboek</button>
+    </div>
+  </div>
+</header>
+
+<nav id="nav" aria-label="Dagen"></nav>
+<main id="app">
+  <section id="panel" aria-live="polite"></section>
+  <div id="map" role="region" aria-label="Routekaart"></div>
+</main>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Foto"><button aria-label="Sluiten"><svg class="i"><use href="#i-x"/></svg></button><img alt=""><div class="cap"></div></div>
+
+<script src="leaflet.js"></script>
+<script src="countries.js"></script>
+<script>window.TILEDATA={};</script>
+<script src="tiles_lo.js"></script>
+<script src="data.js"></script>
+<script src="routes.js"></script>
+<script>
+const COLORS=["#64748b","#2563eb","#0891b2","#dc2626","#9333ea","#16a34a","#ea580c","#db2777","#ca8a04","#0d9488","#475569"];
+const P=window.PLACES, PH=window.PHOTOS, PS=window.PASSES, DAYS=window.DAYS;
+const ll=k=>[P[k][0],P[k][1]];
+const ic=(n,s='')=>`<svg class="i" ${s}><use href="#i-${n}"/></svg>`;
+const MAXH=Math.max(...Object.values(PS));
+const RG=window.ROUTEGEO||{};
+const fmtH=h=>{const m=Math.round(h*2)/2;return (m%1?Math.floor(m)+',5':String(m))};
+const ritTxt=d=>d.rit.length>1?`${fmtH(d.rit[0])}–${fmtH(d.rit[1])} u`:`±${fmtH(d.rit[0])} u`;
+const pauze=h=>h<=5?1.5:2;
+function arr(d,h){const [H,M]=d.start.split(':').map(Number);let t=H*60+M+Math.round((h+pauze(h)+(d.extra||0))*60);t=Math.round(t/15)*15;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+const planTxt=d=>`Vertrek <b>${d.start}</b> · aankomst ±<b>${arr(d,d.rit[0])}</b>${d.rit.length>1?` (kort) / ±<b>${arr(d,d.rit[1])}</b> (lang)`:''} <span style="color:var(--muted)">· incl. ${d.rit.length>1?'1,5–2':fmtH(pauze(d.rit[0]))} u pauzes${d.extra?' + museumbezoek':''}</span>`;
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- kaart ----------
+const map=L.map('map',{zoomSnap:.25,scrollWheelZoom:false}).setView([47.6,9.5],6);
+map.on('focus click',()=>map.scrollWheelZoom.enable());
+map.attributionControl.setPrefix(false);
+map.attributionControl.addAttribution('Natural Earth · routes indicatief');
+// satelliet-ondergrond: Sentinel-2 cloudless, meegeleverd met de pagina; ontbrekende detailtegels worden uit een grovere tegel opgeschaald.
+const Sat=L.GridLayer.extend({createTile(c){
+  const el=document.createElement('div');el.style.overflow='hidden';el.style.background='#16232b';
+  let z=Math.min(c.z,11),x=c.x>>(c.z-z),y=c.y>>(c.z-z);
+  while(z>=5&&!(z+'/'+x+'/'+y in TILEDATA)){z--;x>>=1;y>>=1}
+  if(z<5)return el;
+  const f=2**(c.z-z),img=document.createElement('img');
+  img.src='data:image/jpeg;base64,'+TILEDATA[z+'/'+x+'/'+y];img.alt='';img.draggable=false;
+  Object.assign(img.style,{position:'absolute',width:256*f+'px',height:256*f+'px',left:-(c.x-x*f)*256+'px',top:-(c.y-y*f)*256+'px',maxWidth:'none'});
+  el.appendChild(img);return el;}});
+const sat=new Sat({minZoom:4,maxZoom:13,attribution:'<a href="https://s2maps.eu">Sentinel-2 cloudless</a> © EOX, Copernicus 2020'}).addTo(map);
+map.setMinZoom(5);map.setMaxZoom(13);
+const loadedPacks={};function needPack(p){if(loadedPacks[p])return;loadedPacks[p]=1;const sc=document.createElement('script');sc.src='tiles_'+p+'.js';document.head.appendChild(sc);}
+window.onTilePack=()=>sat.redraw();
+map.on('zoomend',()=>{const z=map.getZoom();if(z>=9.5)needPack('10');if(z>=10.5)needPack('11');});
+L.geoJSON(window.COUNTRIES,{style:()=>({color:'#ffffff',weight:1.2,opacity:.55,dashArray:'4 4',fill:false}),interactive:false}).addTo(map);
+[["DUITSLAND",50.0,9.6],["OOSTENRIJK",47.45,13.2],["ZWITSERLAND",46.75,8.1],["ITALIË",45.75,11.0],["NEDERLAND",52.2,5.6],["FRANKRIJK",48.0,5.6],["BELGIË",50.6,4.6]].forEach(([t,a,b])=>L.marker([a,b],{icon:L.divIcon({className:'',html:`<div style="font:600 11px Inter;letter-spacing:3px;color:#fff;opacity:.85;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.6);white-space:nowrap;transform:translate(-50%,-50%)">${t}</div>`}),interactive:false}).addTo(map));
+
+const dayLayers=[],labelLayers=[];const POI=new Set(['dortmund','frankfurt','mis','livigno','davos','cortina','arabba','samnaun','gepatsch','mannheim','fuessen','sterzing','bolzano','tirano','soelden']);
+DAYS.forEach((d,i)=>{
+  const g=L.layerGroup();
+  const pts=d.geo&&RG[d.geo]?RG[d.geo]:d.route.map(ll);
+  const casing=L.polyline(pts,{color:'#fff',weight:7,opacity:.85,lineJoin:'round',interactive:false});casing._casing=true;
+  const line=L.polyline(pts,{color:COLORS[i],weight:4,opacity:.9,lineJoin:'round'});
+  line.on('click',()=>show(d.n));
+  line.bindTooltip(`Dag ${d.n}: ${d.title}`,{sticky:true});
+  g.addLayer(casing);g.addLayer(line);
+  if(d.alt){g.addLayer(L.polyline(d.altgeo&&RG[d.altgeo]?RG[d.altgeo]:d.alt.map(ll),{color:COLORS[i],weight:3,dashArray:'6 6',opacity:.9}))}
+  dayLayers.push(g);g.addTo(map);
+  const lab=L.layerGroup();const seen=new Set(['bovensmilde','roermond','bfhotel','nauders','selva']);
+  d.route.concat(d.alt||[]).forEach(k=>{if(seen.has(k))return;seen.add(k);const isPass=k in PS;
+    if(isPass){lab.addLayer(L.marker(ll(k),{opacity:0,interactive:false,icon:L.divIcon({className:'',iconSize:[0,0]})}).bindTooltip(P[k][2].replace(/^Passo (di )?/,'').replace(/ \/.*$/,''),{permanent:true,direction:'right',offset:[5,0],className:'lbl passlbl'}));}
+    else{const poi=POI.has(k);lab.addLayer(L.circleMarker(ll(k),{radius:poi?4.5:3.5,color:'#555',weight:1,fillColor:poi?'#fdba74':'#fff',fillOpacity:1}).bindTooltip(P[k][2],poi?{permanent:true,direction:'left',offset:[-6,0],className:'lbl town'}:{direction:'top',className:'lbl town'}));}});
+  labelLayers.push(lab);
+});
+const passMarkers={};
+Object.entries(PS).forEach(([k,h])=>{
+  const ph=PH[k];const name=P[k][2];
+  const m=L.circleMarker(ll(k),{radius:5,color:'#fff',weight:1.5,fillColor:'#0f172a',fillOpacity:1});
+  m.bindTooltip(`${name} · ${h} m`,{direction:'top',offset:[0,-4]});
+  m.bindPopup(`<div class="pop">${ph?`<img src="${ph.f}" alt="">`:''}<b>${name}</b><br>${h} m hoogte</div>`,{maxWidth:260});
+  passMarkers[k]=m;m.addTo(map);
+});
+[["bovensmilde","Bovensmilde · start & thuis"],["bfhotel","Zwarte Woud · nacht 1 & 10"],["nauders","Nauders · nacht 2–5"],["selva","Selva · nacht 6–9"]].forEach(([k,t])=>{
+  L.circleMarker(ll(k),{radius:8,color:'#fff',weight:2,fillColor:'#c2410c',fillOpacity:1}).bindTooltip(t,{permanent:true,direction:'right',offset:[8,0],className:'lbl hq'}).addTo(map);
+});
+const legend=L.control({position:'bottomleft'});
+legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.innerHTML='<div><span class="sw" style="background:#c2410c"></span>Hotel / standplaats</div><div><span class="sw" style="background:#0f172a"></span>Pas (klik voor foto)</div><div style="color:#64748b">Ondergrond: Sentinel-2 satelliet</div><div><i></i>Route (kort)</div><div><i class="d"></i>Lange variant / uitstap</div>';return d};
+legend.addTo(map);
+const allBounds=L.latLngBounds(DAYS.flatMap(d=>d.route.map(ll)));
+// optionele aanloop via Roermond (MTR-start)
+if(RG.bov_roer)L.polyline(RG.bov_roer,{color:'#fff',weight:2,opacity:.7,dashArray:'2 6',interactive:false}).bindTooltip('Alternatief: via Roermond').addTo(map);
+
+// ---------- navigatie ----------
+const panel=document.getElementById('panel'), nav=document.getElementById('nav');
+const views=[{id:'overzicht',label:'Overzicht',icon:'map'},...DAYS.map((d,i)=>({id:'dag-'+d.n,label:'Dag '+d.n,color:COLORS[i]})),{id:'reisboek',label:'Reisboek',icon:'book'}];
+views.forEach((v,i)=>{
+  if(v.id==='reisboek'){const s=document.createElement('span');s.className='sep';nav.appendChild(s)}
+  const b=document.createElement('button');b.dataset.id=v.id;
+  b.innerHTML=(v.color?`<span class="dot" style="background:${v.color}"></span>`:ic(v.icon))+v.label;
+  b.onclick=()=>go(v.id);nav.appendChild(b);
+  if(i===0){const s=document.createElement('span');s.className='sep';nav.appendChild(s)}
+});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{go(b.dataset.go);document.getElementById('nav').scrollIntoView({behavior:reduce?'auto':'smooth'})});
+
+// ---------- bouwstenen ----------
+function gallery(keys){
+  if(!keys.length) return '';
+  return `<h3>${ic('mountain')}Foto's onderweg</h3><div class="gallery">${keys.map((k,i)=>{const p=PH[k];const wide=(i===0&&keys.length%2===1)?' wide':'';return `<figure class="${wide}" data-k="${k}" tabindex="0"><img loading="lazy" src="${p.f}" alt="${p.c}"><figcaption>${p.c}</figcaption></figure>`}).join('')}</div>`;
+}
+function passList(keys){
+  if(!keys.length) return '';
+  return `<h3>${ic('flag')}Passen vandaag</h3><div class="passes">${keys.map(k=>`<div class="pass"><span class="n">${P[k][2]}</span><span class="h">${PS[k].toLocaleString('nl-NL')} m</span><span class="bar"><i style="width:${Math.round(PS[k]/MAXH*100)}%"></i></span></div>`).join('')}</div>`;
+}
+function highlight(n){
+  labelLayers.forEach((l,i)=>{if(n!=null&&DAYS[i].n===n)l.addTo(map);else map.removeLayer(l)});
+  dayLayers.forEach((g,i)=>{const on=(n==null)||DAYS[i].n===n;g.eachLayer(l=>l._casing?l.setStyle({opacity:on?.85:0,weight:on?(n==null?6.5:8):6}):l.setStyle({opacity:on?.95:.25,weight:on?(n==null?3.5:5):3}));if(on&&n!=null)g.eachLayer(l=>l.bringToFront())});
+  Object.entries(passMarkers).forEach(([k,m])=>{const d=n!=null?DAYS[n-1]:null;const on=!d||d.passes.includes(k)||d.route.includes(k)||(d.alt||[]).includes(k);m.setStyle({fillOpacity:on?1:.15,opacity:on?1:.2});m.setRadius(on&&d?6.5:5)});
+}
+const fly=(b,o)=>reduce?map.fitBounds(b,o):map.flyToBounds(b,Object.assign({duration:.8},o));
+
+function show(n){go('dag-'+n)}
+function go(id){
+  [...nav.querySelectorAll('button')].forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
+  const act=nav.querySelector('.on');act&&act.scrollIntoView({block:'nearest',inline:'center',behavior:reduce?'auto':'smooth'});
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+  panel.scrollTop=0;
+  if(id.startsWith('dag-')){
+    const n=+id.slice(4), d=DAYS[n-1], c=COLORS[n-1];
+    highlight(n);
+    fly(L.latLngBounds(d.route.concat(d.alt||[]).map(ll)),{padding:[40,40],maxZoom:10});
+    const cov=d.photos[0]?PH[d.photos[0]]:null;
+    const top=d.passes.length?Math.max(...d.passes.map(k=>PS[k])):null;
+    panel.innerHTML=`${cov?`<div class="cover" data-k="${d.photos[0]}" tabindex="0"><img src="${cov.f}" alt="${cov.c}"><span>${cov.c}</span></div>`:''}
+      <div class="kicker"><span class="sw" style="background:${c}"></span>Dag ${n} van 11 · ${d.type}</div>
+      <h2>${d.title}</h2>
+      <div class="metrics">
+        <div class="metric"><div class="v">${d.km}</div><div class="l">${ic('route')}km${d.km.includes('/')?' kort/lang':''}</div></div>
+        <div class="metric"><div class="v">${ritTxt(d)}</div><div class="l">${ic('gauge')}rijtijd</div></div>
+        <div class="metric"><div class="v">${d.passes.length||'–'}</div><div class="l">${ic('flag')}passen</div></div>
+        <div class="metric"><div class="v">${top?top.toLocaleString('nl-NL')+' m':'–'}</div><div class="l">${ic('mountain')}hoogste</div></div>
+      </div>
+      <div class="plan">${ic('route')}<span>${planTxt(d)}</span></div>
+      <p>${d.text}</p>
+      <div class="ichip" style="margin-bottom:4px">${ic('bed')}Overnachting: ${d.base}</div>
+      <h3>${ic('check')}Hoogtepunten</h3><ul class="hl">${d.highlights.map(h=>`<li>${ic('check')}<span>${h}</span></li>`).join('')}</ul>
+      ${passList(d.passes)}
+      ${gallery(d.photos.slice(1))}
+      <div class="pager">
+        ${n>1?`<button class="btn btn-light" onclick="show(${n-1})">${ic('left')}Dag ${n-1}</button>`:'<span></span>'}
+        ${n<11?`<button class="btn btn-dark" onclick="show(${n+1})">Dag ${n+1}${ic('right')}</button>`:`<button class="btn btn-primary" onclick="go('reisboek')">Reisboek${ic('right')}</button>`}
+      </div>
+      <div class="note">${ic('info')}<span>De lijn volgt de wegen via de plaatsen en passen uit de dagbeschrijving (routeplanner OSRM), maar blijft een benadering: de exacte GPS-route krijg je van MTR. Rijtijden zijn routeplanner-tijden voor een auto; met een groep op de passen kun je 10–20% extra rekenen.</span></div>`;
+  } else if(id==='reisboek'){
+    highlight(null);fly(allBounds,{padding:[30,30]});
+    panel.innerHTML=renderBook();
+    panel.querySelector('#cp').onclick=async e=>{const b=e.currentTarget;try{await navigator.clipboard.writeText(bookText());b.lastChild.textContent='Gekopieerd'}catch(_){b.lastChild.textContent='Kopiëren lukt hier niet'}};
+  } else {
+    highlight(null);fly(allBounds,{padding:[30,30]});
+    panel.innerHTML=`<div class="kicker">Overzicht</div><h2>Ruim 30 Alpenpassen in 11 dagen</h2>
+      <p>Individuele motorreis door Duitsland, Oostenrijk, Zwitserland en Italië. Je rijdt zelf met GPS-routes en roadbook en kiest per dag meestal tussen een korte en een lange variant.</p>
+      <div class="intro-chips"><span class="ichip">${ic('route')}GPS-routes + roadbook</span><span class="ichip">${ic('bed')}10× halfpension</span><span class="ichip">${ic('gauge')}kort of lang per dag</span></div>
+      <h3>${ic('bed')}Drie standplaatsen</h3>
+      <div class="bases">
+        <div class="base"><img src="img/schwarzwald.jpg" alt=""><div><b>Zwarte Woud</b><span>nacht 1 en 10</span></div></div>
+        <div class="base"><img src="img/nauders.jpg" alt=""><div><b>Nauders</b><span>nacht 2–5</span></div></div>
+        <div class="base"><img src="img/selva.jpg" alt=""><div><b>Selva</b><span>nacht 6–9</span></div></div>
+      </div>
+      <h3>${ic('gauge')}Kilometers en rijtijden</h3>
+  <table class="times"><tr><td><b>Dag</b></td><td><b>km · rijtijd · planning</b></td></tr>
+  ${DAYS.map(d=>`<tr><td>${d.n}. ${d.title}</td><td>${d.km} km · ${ritTxt(d)}<br><span style="font-size:12.5px">${planTxt(d)}</span></td></tr>`).join('')}
+  </table>
+  <p style="font-size:12.5px;color:var(--muted);margin-top:8px">Rijtijden zonder pauzes, op basis van routeplanner-snelheden; aankomsttijden inclusief 1,5–2 uur pauze. Halfpension: plan aankomst ruim voor het diner.</p>
+  <h3>${ic('route')}Dag voor dag</h3>
+      <div class="daygrid">${DAYS.map((d,i)=>{const ph=d.photos[0]?PH[d.photos[0]]:null;return `<button class="daycard" onclick="show(${d.n})">${ph?`<img src="${ph.f}" alt="">`:'<div class="ph"></div>'}<div><div class="t"><i style="background:${COLORS[i]}"></i>Dag ${d.n} · ${d.title}</div><div class="m">${d.km} km · ${ritTxt(d)} rijden · ${d.type}</div></div>${ic('chev')}</button>`}).join('')}</div>`;
+  }
+  panel.querySelectorAll('[data-k]').forEach(f=>{f.onclick=()=>openLB(f.dataset.k);f.onkeydown=e=>{if(e.key==='Enter')openLB(f.dataset.k)}});
+}
+
+function renderBook(){
+  return `<div class="book"><div class="kicker">${ic('book')}Reisboek</div><h2>Alles op een rij</h2>
+  <h3>${ic('info')}Praktisch</h3>
+  <table>
+   <tr><td>Organisator</td><td>MTR Motorreizen (individuele reis)</td></tr>
+   <tr><td>Duur</td><td>11 dagen / 10 nachten (uit te breiden tot 14 dagen met extra lussen in Oostenrijk en de Dolomieten)</td></tr>
+   <tr><td>Start en eind</td><td>Bovensmilde (MTR-programma start officieel in Roermond, 247 km / ±3,5 u verderop)</td></tr>
+   <tr><td>Totaal vanaf Bovensmilde</td><td>±3.750 km (korte varianten) tot ±4.350 km (lange varianten)</td></tr>
+   <tr><td>Prijs motorrijder</td><td><span class="price">€1.290</span> p.p.</td></tr>
+   <tr><td>Eenpersoonskamer</td><td>€1.650 p.p.</td></tr>
+   <tr><td>Hoogseizoentoeslag</td><td>€190 p.p. (vertrek 2–23 augustus)</td></tr>
+   <tr><td>Inbegrepen</td><td>10× halfpension, GPS-routes, uitgebreid roadbook, gesloten garage (indien beschikbaar), bijdrage VZR Garantiefonds</td></tr>
+   <tr><td>Waardering</td><td>8,7 (11 reviews)</td></tr>
+   <tr><td>Vertrekdata</td><td>Niet vast: zelf te kiezen in overleg met MTR</td></tr>
+  </table>
+  <h3>${ic('bed')}Overnachtingen</h3>
+  <table>
+   <tr><td>Nacht 1</td><td>Hotel in het Zwarte Woud (motorgarage indien plaats)</td></tr>
+   <tr><td>Nacht 2–5</td><td>Hotel in Nauders, Oostenrijk: gesloten garage en wellness</td></tr>
+   <tr><td>Nacht 6–9</td><td>Hotel in Selva di Val Gardena: grote ondergrondse garage, zicht op de Sella</td></tr>
+   <tr><td>Nacht 10</td><td>Hotel in het Zwarte Woud</td></tr>
+  </table>
+  <h3>${ic('route')}Dag voor dag</h3>
+  ${DAYS.map((d,i)=>`<div class="day" style="--c:${COLORS[i]}"><h4>Dag ${d.n} · ${d.title}</h4><div class="meta">${d.km} km · ${ritTxt(d)} rijden · ${d.type}${d.passes.length?` · ${d.passes.length} pas${d.passes.length>1?'sen':''}`:''}</div><p style="font-size:14px;margin:0 0 6px">${d.text}</p>${d.passes.length?`<div style="font-size:13px;color:var(--muted)">${d.passes.map(k=>P[k][2]+' ('+PS[k]+' m)').join(' · ')}</div>`:''}</div>`).join('')}
+  <h3>${ic('alert')}Aandachtspunten voor de groep</h3>
+  <ul class="hl warn">
+   <li>${ic('alert')}<span>Flitspaal op de Passo Giau (dag 9) is zeer actief.</span></li>
+   <li>${ic('alert')}<span>Livigno en Samnaun zijn tax-free: goedkoop tanken.</span></li>
+   <li>${ic('alert')}<span>Op de terugweg wordt het Oostenrijkse vignet vermeden; op de heenweg (dag 2) loopt een kort stuk snelweg: check of je daar een vignet nodig hebt.</span></li>
+   <li>${ic('alert')}<span>Reviewers noemen de lange routes pittig, en populaire passen druk in het weekend.</span></li>
+   <li>${ic('alert')}<span>Stelvio, Gavia en Timmelsjoch zijn alleen open van ca. juni tot oktober; check de openingsdata vóór vertrek.</span></li>
+   <li>${ic('alert')}<span>Niet vermeld op de site: bagagevervoer, brandstof en verzekering: navragen bij MTR.</span></li>
+  </ul>
+  <div style="margin-top:16px"><button class="btn btn-dark" id="cp">${ic('copy')}<span>Kopieer reisboek als tekst (voor de groepsapp)</span></button></div>
+  <h3>Fotoverantwoording</h3>
+  <div class="credits">Alle foto's via Wikimedia Commons: ${Object.values(PH).map(p=>`${p.c} – ${p.a}, <a href="${p.u}">${p.l}</a>`).join(' · ')}.<br>Satellietbeelden: Sentinel-2 cloudless (s2maps.eu, EOX IT Services GmbH; bevat gewijzigde Copernicus Sentinel-data 2020), CC BY-NC-SA 4.0.<br>Reisinformatie: <a href="https://mtrmotorreizen.nl/individuele-motorreizen/motorvakantie-oostenrijk/motorreis-alpen-passenparade/">mtrmotorreizen.nl</a>, geraadpleegd 15-11-2026.</div>
+  </div>`;
+}
+function bookText(){
+  return `ALPEN PASSENPARADE (MTR Motorreizen) – 11 dagen\nStart/eind Bovensmilde · €1.290 p.p. (1-pk €1.650, hoogseizoen +€190)\nHotels: Zwarte Woud (n1, n10) · Nauders (n2–5) · Selva di Val Gardena (n6–9)\n\n`+DAYS.map(d=>`Dag ${d.n} – ${d.title} (${d.km} km, ${ritTxt(d)} rijden, vertrek ${d.start})\n${d.text}${d.passes.length?'\nPassen: '+d.passes.map(k=>P[k][2]).join(', '):''}`).join('\n\n')+`\n\nLet op: flitspaal Passo Giau · tax-free tanken in Livigno/Samnaun`;
+}
+
+// ---------- lightbox ----------
+const lb=document.getElementById('lb');let lastFocus=null;
+function openLB(k){const p=PH[k];lastFocus=document.activeElement;lb.querySelector('img').src=p.f;lb.querySelector('img').alt=p.c;lb.querySelector('.cap').innerHTML=`${p.c}<br><small>Foto: ${p.a} · <a href="${p.u}">${p.l}</a></small>`;lb.classList.add('on');lb.querySelector('button').focus()}
+function closeLB(){lb.classList.remove('on');lastFocus&&lastFocus.focus()}
+lb.onclick=e=>{if(!e.target.closest('a'))closeLB()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lb.classList.contains('on'))closeLB()});
+
+function route(){const h=(location.hash||'').slice(1);const ok=views.some(v=>v.id===h);go(ok?h:'overzicht');return ok}
+window.addEventListener('hashchange',route);
+map.fitBounds(allBounds,{padding:[30,30]});
+if(route()&&location.hash!=='#overzicht') nav.scrollIntoView();
+</script>
+</body>
+</html>
