@@ -4,6 +4,7 @@ Interactieve reisgids voor de 11-daagse motorreis *Alpen Passenparade* (MTR Moto
 
 - Klikbare dagen met kilometers, rijtijden, passen en foto's
 - Satellietkaart (Sentinel-2) met de routes per dag
+- 3D-weergave (three.js) van dag 2 t/m 10, met passen als zuilen en een camera die de route vliegt
 - Reisboek met praktische info
 
 ## Online zetten met GitHub Pages
@@ -16,4 +17,4 @@ Interactieve reisgids voor de 11-daagse motorreis *Alpen Passenparade* (MTR Moto
 - Foto's: Wikimedia Commons (makers en licenties staan in het reisboek op de site)
 - Satellietbeelden: Sentinel-2 cloudless – s2maps.eu door EOX IT Services GmbH (bevat gewijzigde Copernicus Sentinel-data 2020), CC BY-NC-SA 4.0
 - Grenzen: Natural Earth · routes: OSRM / OpenStreetMap-data (indicatief)
-- Kaartbibliotheek: Leaflet
+- Kaartbibliotheek: Leaflet · 3D: three.js

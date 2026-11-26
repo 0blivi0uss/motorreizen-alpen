@@ -95,6 +95,8 @@ ul.hl li svg{width:18px;height:18px;color:var(--primary);margin-top:2px}
 .plan{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:13.5px;line-height:1.5}
 .plan svg{color:var(--primary);margin-top:2px}
 .plan b{font-weight:600}
+.btn3d{width:100%;justify-content:center;margin:0 0 14px;padding:11px 16px;font-size:14px}
+.btn3d[disabled]{opacity:.6;cursor:wait}
 .pager{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
 /* overzicht */
 .intro-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
@@ -177,6 +179,7 @@ ul.hl li svg{width:18px;height:18px;color:var(--primary);margin-top:2px}
   <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
   <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h2l3 11.5M5.5 17.5 9 10h7l-3.5 7.5M9 10 8 7H6"/></symbol>
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></symbol>
@@ -199,6 +202,7 @@ ul.hl li svg{width:18px;height:18px;color:var(--primary);margin-top:2px}
     <div class="ctas">
       <button class="btn btn-primary" data-go="overzicht"><svg class="i"><use href="#i-map"/></svg>Bekijk de route</button>
       <button class="btn btn-ghost" data-go="reisboek"><svg class="i"><use href="#i-book"/></svg>Open het reisboek</button>
+      <button class="btn btn-ghost" onclick="open3d(null)"><svg class="i"><use href="#i-cube"/></svg>3D-weergave</button>
     </div>
   </div>
 </header>
@@ -210,6 +214,7 @@ ul.hl li svg{width:18px;height:18px;color:var(--primary);margin-top:2px}
 </main>
 <div id="lb" role="dialog" aria-modal="true" aria-label="Foto"><button aria-label="Sluiten"><svg class="i"><use href="#i-x"/></svg></button><img alt=""><div class="cap"></div></div>
 
+<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/OrbitControls.js":"./lib/OrbitControls.js","three/addons/CSS2DRenderer.js":"./lib/CSS2DRenderer.js"}}</script>
 <script src="leaflet.js"></script>
 <script src="countries.js"></script>
 <script>window.TILEDATA={};</script>
@@ -317,6 +322,14 @@ function highlight(n){
 const fly=(b,o)=>reduce?map.fitBounds(b,o):map.flyToBounds(b,Object.assign({duration:.8},o));
 
 function show(n){go('dag-'+n)}
+// 3D-weergave: three.js wordt pas geladen bij de eerste klik
+window.open3d=function(n){
+  const btns=document.querySelectorAll('.btn3d');btns.forEach(b=>{b.disabled=true;b.dataset.t=b.lastChild.textContent;b.lastChild.textContent='3D laden…'});
+  import('./three3d.js').then(m=>m.open3D(n,cur=>{if(cur)show(cur)}))
+   .catch(e=>{console.error(e);alertBox('De 3D-weergave kon niet laden in deze browser.')})
+   .finally(()=>btns.forEach(b=>{b.disabled=false;if(b.dataset.t)b.lastChild.textContent=b.dataset.t}));
+};
+function alertBox(t){const d=document.createElement('div');d.textContent=t;Object.assign(d.style,{position:'fixed',left:'50%',bottom:'24px',transform:'translateX(-50%)',background:'#0f172a',color:'#fff',padding:'10px 16px',borderRadius:'10px',zIndex:9999});document.body.appendChild(d);setTimeout(()=>d.remove(),4000)}
 function go(id){
   [...nav.querySelectorAll('button')].forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
   const act=nav.querySelector('.on');act&&act.scrollIntoView({block:'nearest',inline:'center',behavior:reduce?'auto':'smooth'});
@@ -338,6 +351,7 @@ function go(id){
         <div class="metric"><div class="v">${top?top.toLocaleString('nl-NL')+' m':'–'}</div><div class="l">${ic('mountain')}hoogste</div></div>
       </div>
       <div class="plan">${ic('route')}<span>${planTxt(d)}</span></div>
+      ${n>=2&&n<=10?`<button class="btn btn-dark btn3d" onclick="open3d(${n})">${ic('cube')}Bekijk dag ${n} in 3D</button>`:''}
       <p>${d.text}</p>
       <div class="ichip" style="margin-bottom:4px">${ic('bed')}Overnachting: ${d.base}</div>
       <h3>${ic('check')}Hoogtepunten</h3><ul class="hl">${d.highlights.map(h=>`<li>${ic('check')}<span>${h}</span></li>`).join('')}</ul>
@@ -356,6 +370,7 @@ function go(id){
     highlight(null);fly(allBounds,{padding:[30,30]});
     panel.innerHTML=`<div class="kicker">Overzicht</div><h2>Ruim 30 Alpenpassen in 11 dagen</h2>
       <p>Individuele motorreis door Duitsland, Oostenrijk, Zwitserland en Italië. Je rijdt zelf met GPS-routes en roadbook en kiest per dag meestal tussen een korte en een lange variant.</p>
+      <button class="btn btn-dark btn3d" onclick="open3d(null)">${ic('cube')}Bekijk de Alpen in 3D</button>
       <div class="intro-chips"><span class="ichip">${ic('route')}GPS-routes + roadbook</span><span class="ichip">${ic('bed')}10× halfpension</span><span class="ichip">${ic('gauge')}kort of lang per dag</span></div>
       <h3>${ic('bed')}Drie standplaatsen</h3>
       <div class="bases">
