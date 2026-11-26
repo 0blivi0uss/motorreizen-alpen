@@ -7,6 +7,9 @@ Interactieve reisgids voor de 11-daagse motorreis *Alpen Passenparade* (MTR Moto
 - 3D-weergave (three.js) van dag 2 t/m 10, met passen als zuilen en een camera die de route vliegt
 - Reisboek met praktische info
 
+## Offline versie
+In [`download/Alpen-Passenparade-reisboek.html`](download/Alpen-Passenparade-reisboek.html) staat de hele reisgids als één bestand (±21 MB), met foto's, satellietkaart en 3D. Downloaden en openen in een browser; werkt ook zonder internet, handig in de bergen.
+
 ## Online zetten met GitHub Pages
 1. Ga in deze repository naar **Settings → Pages**.
 2. Kies bij *Source* **Deploy from a branch**, branch `main`, map `/ (root)`, en klik **Save**.

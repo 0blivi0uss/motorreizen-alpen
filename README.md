@@ -2,7 +2,7 @@
 
 | Reis | Map |
 |---|---|
-| Alpen Passenparade (MTR Motorreizen, 11 dagen, start Bovensmilde) | [`alpen-passenparade/`](alpen-passenparade/) |
+| Alpen Passenparade (MTR Motorreizen, 11 dagen, start Bovensmilde) | [`alpen-passenparade/`](alpen-passenparade/) · offline: [`download/`](alpen-passenparade/download/Alpen-Passenparade-reisboek.html) |
 
 ## Online zetten (GitHub Pages)
 **Settings → Pages → Deploy from a branch → `main` → `/ (root)` → Save.**
